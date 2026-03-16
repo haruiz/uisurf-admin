@@ -37,18 +37,31 @@ The project uses two settings groups:
 Important environment variables:
 
 - `API_ROOT_PATH`
+  - Base path used when the API is mounted behind a reverse proxy. Default: `/api`.
 - `UI_AGENT_IMAGE`
+  - Docker image used to start a new UISurf agent session container. Default: `uisurf-agent:latest`.
 - `UI_AGENT_CONTAINER_PORT`
+  - TCP port exposed inside the UISurf agent container. The API publishes this port to a host port for each session. Default: `6080`.
 - `SESSION_BASE_PORT`
+  - Starting point for host port allocation. New session ports are assigned above this value. Default: `7000`.
 - `SESSION_CONTAINER_PREFIX`
+  - Prefix used when generating Docker container names for managed sessions. Default: `uisurf-agent-session`.
 - `SESSION_BIND_HOST`
+  - Host interface used when publishing session container ports. Default: `127.0.0.1`.
 - `PUBLIC_VNC_HOST`
+  - Public hostname used to generate the session VNC URL returned by the API. Required if clients must receive a working session URL.
 - `PUBLIC_VNC_SCHEME`
+  - URL scheme used with `PUBLIC_VNC_HOST`, typically `http` or `https`. Default: `http`.
 - `GEMINI_API_KEY`
+  - Gemini API key forwarded into each UISurf agent session container. Optional, but at least one provider key must be set.
 - `GOOGLE_API_KEY`
+  - Google AI API key forwarded into each UISurf agent session container. Optional, but at least one provider key must be set.
 - `FIREBASE_PROJECT_ID`
+  - Firebase project identifier used by the admin backend configuration.
 - `FIREBASE_CLIENT_EMAIL`
+  - Firebase service-account client email, used when explicit Firebase credentials are configured.
 - `FIREBASE_PRIVATE_KEY`
+  - Firebase service-account private key, used when explicit Firebase credentials are configured.
 
 `PUBLIC_VNC_HOST` is required for the API to generate valid VNC URLs for sessions.
 

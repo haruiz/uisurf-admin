@@ -6,7 +6,7 @@ from uisurf_admin.models import (
     DeleteSessionResponse,
     SessionResponse,
 )
-from uisurf_admin.security import is_admin, AuthUserSchema
+from uisurf_admin.security import is_admin, AuthUserSchema, get_auth_user
 from uisurf_admin.services.session_manager import SessionManager, get_session_manager
 
 
@@ -18,13 +18,14 @@ class SessionsCBV:
     """Administrative endpoints for managing UISurf agent sessions."""
 
     session_manager: SessionManager = Depends(get_session_manager)
-    user : AuthUserSchema = Depends(is_admin)
+    user : AuthUserSchema = Depends(get_auth_user)
 
     @router.get(
         "/",
         response_model=list[SessionResponse],
         summary="List active sessions",
-        description="Returns the in-memory list of active UISurf agent sessions."
+        description="Returns the in-memory list of active UISurf agent sessions.",
+        dependencies=[Depends(is_admin)],
     )
     async def list_sessions(self) -> list[SessionResponse]:
         """Return all active managed agent sessions."""
