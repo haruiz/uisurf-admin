@@ -48,6 +48,10 @@ Important environment variables:
   - Prefix used when generating Docker container names for managed sessions. Default: `uisurf-agent-session`.
 - `SESSION_BIND_HOST`
   - Host interface used when publishing session container ports. Default: `127.0.0.1`.
+- `PUBLIC_VNC_MODE`
+  - Session URL mode. Use `direct` for `scheme://host:port/...` URLs and `proxy` for `scheme://host/prefix/port/...` URLs. Default: `direct`.
+- `PUBLIC_VNC_PROXY_PATH_PREFIX`
+  - Path prefix used when `PUBLIC_VNC_MODE=proxy`. Default: `/sessions`.
 - `PUBLIC_VNC_HOST`
   - Public hostname used to generate the session VNC URL returned by the API. Required if clients must receive a working session URL.
 - `PUBLIC_VNC_SCHEME`
@@ -64,6 +68,9 @@ Important environment variables:
   - Firebase service-account private key, used when explicit Firebase credentials are configured.
 
 `PUBLIC_VNC_HOST` is required for the API to generate valid VNC URLs for sessions.
+For local direct access, use `PUBLIC_VNC_MODE=direct` and `PUBLIC_VNC_SCHEME=http`.
+For reverse-proxied HTTPS access on a VM, use `PUBLIC_VNC_MODE=proxy` and a host
+that resolves to the reverse proxy, such as `<vm-ip>.sslip.io`.
 
 At least one of `GEMINI_API_KEY` or `GOOGLE_API_KEY` must be configured so newly
 created UISurf agent containers receive the credentials they need at startup.

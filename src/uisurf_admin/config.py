@@ -1,10 +1,11 @@
 import logging
 import re
 from functools import lru_cache
+from typing import Literal
 
 import firebase_admin
 from firebase_admin import credentials
-from pydantic import AliasChoices, Field
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -75,6 +76,17 @@ class SessionSettings(BaseSettings):
     public_vnc_host: str = Field(default="127.0.0.1", validation_alias="PUBLIC_VNC_HOST")
     # URL scheme paired with `public_vnc_host` when building the public access URL.
     public_vnc_scheme: str = Field(default="http", validation_alias="PUBLIC_VNC_SCHEME")
+    # Session URL generation mode. `direct` exposes host ports directly, while
+    # `proxy` emits path-based URLs meant to be fronted by a reverse proxy.
+    public_vnc_mode: Literal["direct", "proxy"] = Field(
+        default="direct",
+        validation_alias="PUBLIC_VNC_MODE",
+    )
+    # Proxy path prefix used when `PUBLIC_VNC_MODE=proxy`.
+    public_vnc_proxy_path_prefix: str = Field(
+        default="/sessions",
+        validation_alias="PUBLIC_VNC_PROXY_PATH_PREFIX",
+    )
     # API key used by the UISurf agent when talking to Gemini-compatible backends.
     gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
     # API key used by the UISurf agent when talking to Google AI backends.
@@ -96,6 +108,14 @@ class SessionSettings(BaseSettings):
     def session_id_regex(self) -> re.Pattern[str]:
         """Compiled session ID validator used by the session manager."""
         return re.compile(self.session_id_pattern)
+
+    @property
+    def normalized_public_vnc_proxy_path_prefix(self) -> str:
+        """Return a stable absolute prefix used for reverse-proxied session URLs."""
+        prefix = self.public_vnc_proxy_path_prefix.strip()
+        if not prefix:
+            return "/sessions"
+        return "/" + prefix.strip("/")
 
     def agent_environment(self) -> dict[str, str]:
         """Return environment variables that must be injected into agent containers."""

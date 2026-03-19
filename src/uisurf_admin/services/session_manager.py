@@ -1,6 +1,7 @@
 from functools import lru_cache
 import socket
 import threading
+from urllib.parse import urlencode
 
 import docker
 from docker.errors import APIError, DockerException, NotFound
@@ -108,10 +109,11 @@ class SessionManager:
         Returns:
             The absolute public base URL for the container instance.
         """
-        return (
-            f"{self.settings.public_vnc_scheme}://"
-            f"{self.settings.public_vnc_host}:{port}"
-        )
+        base = f"{self.settings.public_vnc_scheme}://{self.settings.public_vnc_host}"
+        if self.settings.public_vnc_mode == "proxy":
+            prefix = self.settings.normalized_public_vnc_proxy_path_prefix
+            return f"{base}{prefix}/{port}"
+        return f"{base}:{port}"
 
     def build_vnc_url(self, session_id: str, port: int) -> str:
         """Build the VNC URL returned to API callers for the given session.
@@ -131,7 +133,21 @@ class SessionManager:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="PUBLIC_VNC_HOST must be configured to build a session VNC URL",
             )
-        return f"{self.build_public_base_url(port)}/vnc.html"
+        query = urlencode(
+            {
+                "autoconnect": "1",
+                "resize": "scale",
+                "path": self.build_websockify_path(port),
+            }
+        )
+        return f"{self.build_public_base_url(port)}/vnc.html?{query}"
+
+    def build_websockify_path(self, port: int) -> str:
+        """Build the path parameter expected by noVNC for websocket tunneling."""
+        if self.settings.public_vnc_mode == "proxy":
+            prefix = self.settings.normalized_public_vnc_proxy_path_prefix.strip("/")
+            return f"{prefix}/{port}/websockify"
+        return "websockify"
 
     def build_agent_environment(self, port: int) -> dict[str, str]:
         """Build per-container environment variables for agent discovery URLs.
