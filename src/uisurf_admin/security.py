@@ -9,6 +9,8 @@ from pydantic import ConfigDict, EmailStr
 from firebase_admin import auth
 from firebase_admin.auth import ExpiredIdTokenError, InvalidIdTokenError
 
+from uisurf_admin.config import get_firebase_app
+
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +48,7 @@ class AuthUserSchema(APIModel):
 def _verify_token(token: str) -> AuthUserSchema:
     """Validate a Firebase ID token and convert its claims into `AuthUserSchema`."""
     try:
-        decoded: dict[str, Any] | None = auth.verify_id_token(token)
+        decoded: dict[str, Any] | None = auth.verify_id_token(token, app=get_firebase_app())
     except ExpiredIdTokenError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

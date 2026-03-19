@@ -122,9 +122,37 @@ def get_session_settings() -> SessionSettings:
 @lru_cache
 def get_firebase_app() -> firebase_admin.App:
     """Initialize and cache the default Firebase Admin application."""
-    # This uses Application Default Credentials, so local development requires
-    # `gcloud auth application-default login` or `GOOGLE_APPLICATION_CREDENTIALS`.
-    cred = credentials.ApplicationDefault()
-    default_app = firebase_admin.initialize_app(credential=cred)
-    logger.info("Firebase app initialized")
+    try:
+        return firebase_admin.get_app()
+    except ValueError:
+        pass
+
+    settings = get_app_settings()
+
+    if settings.firebase_client_email and settings.firebase_private_key and settings.firebase_project_id:
+        credential = credentials.Certificate(
+            {
+                "type": "service_account",
+                "project_id": settings.firebase_project_id,
+                "client_email": settings.firebase_client_email,
+                "private_key": settings.firebase_private_key.replace("\\n", "\n"),
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        )
+        default_app = firebase_admin.initialize_app(
+            credential=credential,
+            options={"projectId": settings.firebase_project_id},
+        )
+        logger.info("Firebase app initialized from explicit service account settings")
+        return default_app
+
+    options = {"projectId": settings.firebase_project_id} if settings.firebase_project_id else None
+    default_app = firebase_admin.initialize_app(options=options)
+    if settings.firebase_project_id:
+        logger.info(
+            "Firebase app initialized with application default credentials for project %s",
+            settings.firebase_project_id,
+        )
+    else:
+        logger.info("Firebase app initialized with application default credentials")
     return default_app

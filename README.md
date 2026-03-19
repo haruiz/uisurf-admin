@@ -88,6 +88,11 @@ Or use:
 sh run.local.sh
 ```
 
+For local development, `run.local.sh` loads `uisurf-admin/.env` first and then
+falls back to `../uisurf-app/.env` for missing settings. That keeps Firebase
+token verification aligned with the app backend when you have not duplicated the
+same `FIREBASE_*` values into the admin service config yet.
+
 ## Session Lifecycle
 
 1. UISurf calls the session creation endpoint.

@@ -1,0 +1,12 @@
+.git
+.gitignore
+.idea
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+.DS_Store
+uv.lock
+scripts
