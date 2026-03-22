@@ -149,11 +149,16 @@ class SessionManager:
             return f"{prefix}/{port}/websockify"
         return "websockify"
 
-    def build_agent_environment(self, port: int) -> dict[str, str]:
+    def build_agent_environment(
+        self,
+        port: int,
+        control_mode: str,
+    ) -> dict[str, str]:
         """Build per-container environment variables for agent discovery URLs.
 
         Args:
             port: Published host port assigned to the container.
+            control_mode: Session control mode such as `agent` or `manual`.
 
         Returns:
             Environment variables combining shared agent credentials with
@@ -162,6 +167,11 @@ class SessionManager:
         environment = self.settings.agent_environment()
         public_base_url = self.build_public_base_url(port)
         environment["PUBLIC_BASE_URL"] = public_base_url
+        environment["SESSION_CONTROL_MODE"] = control_mode
+        auto_confirm = "true" if control_mode == "agent" else "false"
+        environment["AUTO_CONFIRM"] = auto_confirm
+        environment["BROWSER_AUTO_CONFIRM"] = auto_confirm
+        environment["DESKTOP_AUTO_CONFIRM"] = auto_confirm
         environment["BROWSER_AGENT_PUBLIC_URL"] = f"{public_base_url}/browser/"
         environment["DESKTOP_AGENT_PUBLIC_URL"] = f"{public_base_url}/desktop/"
         return environment
@@ -323,7 +333,10 @@ class SessionManager:
             for _ in range(max_attempts):
                 port = self.allocate_port()
                 session = self.build_session(validated_id, port, control_mode)
-                environment = self.build_agent_environment(port)
+                environment = self.build_agent_environment(
+                    port,
+                    control_mode=session.control_mode,
+                )
 
                 try:
                     client.containers.run(
